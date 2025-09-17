@@ -1,0 +1,46 @@
+import random, time
+
+class Student:
+    def __init__(self, name, roll_no, cgpa):
+        self.name, self.roll_no, self.cgpa = name, roll_no, cgpa
+    def __repr__(self): return f"{self.name} ({self.roll_no}) - CGPA: {self.cgpa}"
+
+def quick_sort(students):
+    if len(students) <= 1: return students
+    pivot = students[len(students)//2].cgpa
+    left  = [s for s in students if s.cgpa > pivot]
+    mid   = [s for s in students if s.cgpa == pivot]
+    right = [s for s in students if s.cgpa < pivot]
+    return quick_sort(left) + mid + quick_sort(right)
+
+def merge_sort(students):
+    if len(students) <= 1: return students
+    mid = len(students)//2
+    return merge(merge_sort(students[:mid]), merge_sort(students[mid:]))
+
+def merge(left, right):
+    res=[]; i=j=0
+    while i<len(left) and j<len(right):
+        if left[i].cgpa >= right[j].cgpa: res.append(left[i]); i+=1
+        else: res.append(right[j]); j+=1
+    return res+left[i:]+right[j:]
+
+def top_10(students): return students[:10]
+
+def generate_students(n=50000):
+    return [Student(f"Student{i}", f"R{i:05}", round(random.uniform(5.0,10.0),2)) for i in range(n)]
+
+def benchmark_sort(func, students):
+    start=time.time()
+    sorted_students=func(students[:])
+    return sorted_students, time.time()-start
+
+def main():
+    students = generate_students()
+    sorted_q, t_q = benchmark_sort(quick_sort, students)
+    sorted_m, t_m = benchmark_sort(merge_sort, students)
+    print(f"Quick Sort: {t_q:.4f}s | Merge Sort: {t_m:.4f}s")
+    print("\nTop 10 Students:")
+    for s in top_10(sorted_q): print(s)
+
+if __name__=="__main__": main()
