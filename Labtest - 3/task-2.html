@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Live Digital Clock — HH:MM:SS AM/PM</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;600;800&display=swap" rel="stylesheet">
+  <style>
+    /* AI-generated CSS: modern centered glass clock */
+    :root{
+      --bg1: #0f172a; /* deep navy */
+      --bg2: #0b1220; /* darker navy */
+      --accent: #7c5cff; /* violet accent */
+      --glass: rgba(255,255,255,0.06);
+      --glass-2: rgba(255,255,255,0.03);
+      --text: #e6eef8;
+    }
+
+    html,body{
+      height:100%;
+      margin:0;
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+      background: linear-gradient(135deg,var(--bg1),var(--bg2));
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      color:var(--text);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:2rem;
+    }
+
+    .clock-wrap{
+      width: min(520px, 92%);
+      background: linear-gradient(180deg,var(--glass), var(--glass-2));
+      border-radius:18px;
+      box-shadow: 0 10px 30px rgba(2,6,23,0.6), inset 0 1px 0 rgba(255,255,255,0.02);
+      padding: 36px 28px;
+      text-align:center;
+      backdrop-filter: blur(8px) saturate(120%);
+      -webkit-backdrop-filter: blur(8px) saturate(120%);
+      border: 1px solid rgba(255,255,255,0.04);
+    }
+
+    .brand{
+      font-weight:600;
+      letter-spacing:0.6px;
+      font-size:0.9rem;
+      color: rgba(230,238,248,0.75);
+      margin-bottom:12px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+    }
+
+    .logo-dot{
+      width:10px;height:10px;border-radius:50%;background:linear-gradient(180deg,var(--accent), #4ea1ff);
+      box-shadow:0 4px 18px rgba(124,92,255,0.28);
+    }
+
+    .time{
+      font-size: clamp(2.2rem, 6vw, 4.4rem);
+      font-weight:800;
+      letter-spacing:1px;
+      margin:6px 0 8px;
+      display:flex;
+      justify-content:center;
+      align-items:baseline;
+      gap:10px;
+    }
+
+    .ampm{
+      font-size: clamp(0.9rem, 2vw, 1.2rem);
+      font-weight:600;
+      padding:6px 9px;
+      border-radius:8px;
+      background: linear-gradient(90deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+      color: rgba(255,255,255,0.9);
+      transform: translateY(-6px);
+    }
+
+    .seconds {
+      font-weight:600;
+      opacity:0.95;
+      font-size:0.72em;
+      margin-left:4px;
+      min-width:46px;
+      display:inline-block;
+      text-align:center;
+      padding:6px 8px;
+      border-radius:8px;
+      background: rgba(255,255,255,0.02);
+    }
+
+    .subtitle{
+      font-size:0.95rem;
+      color: rgba(230,238,248,0.68);
+      margin-top:6px;
+    }
+
+    /* subtle pulse on seconds */
+    @keyframes pulse {
+      0%{ box-shadow: 0 0 0 0 rgba(124,92,255,0.12);} 
+      70%{ box-shadow: 0 0 0 12px rgba(124,92,255,0);}
+      100%{ box-shadow: 0 0 0 0 rgba(124,92,255,0);}
+    }
+    .seconds.pulse{ animation: pulse 1s infinite; }
+
+    /* small-screen tweaks */
+    @media (max-width:420px){
+      .clock-wrap{ padding:22px; }
+      .brand{ font-size:0.8rem }
+    }
+  </style>
+</head>
+<body>
+  <main class="clock-wrap" role="main" aria-label="Live digital clock">
+    <div class="brand"><span class="logo-dot" aria-hidden="true"></span>Live Digital Clock</div>
+
+    <div id="time" class="time" aria-live="polite">
+      <!-- Time will be injected here -->
+      <span id="hhmm">00:00</span>
+      <span class="seconds" id="ss">00</span>
+      <span class="ampm" id="ampm">AM</span>
+    </div>
+
+    <div class="subtitle">Format: <strong>HH:MM:SS AM/PM</strong></div>
+  </main>
+
+  <script>
+    // Live Digital Clock — Format HH:MM:SS AM/PM
+    function pad(n){ return n.toString().padStart(2,'0'); }
+
+    function updateClock(){
+      const now = new Date();
+      let hours = now.getHours();
+      const minutes = now.getMinutes();
+      const seconds = now.getSeconds();
+
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      // convert to 12-hour
+      hours = hours % 12;
+      hours = hours ? hours : 12; // the hour '0' should be '12'
+
+      // build strings
+      const hh = pad(hours);
+      const mm = pad(minutes);
+      const ss = pad(seconds);
+
+      // insert into DOM
+      document.getElementById('hhmm').textContent = `${hh}:${mm}`;
+      const ssEl = document.getElementById('ss');
+      ssEl.textContent = ss;
+      document.getElementById('ampm').textContent = ampm;
+
+      // add subtle pulse animation to the seconds block (restart animation every tick)
+      ssEl.classList.remove('pulse');
+      // trigger reflow to restart animation
+      void ssEl.offsetWidth;
+      ssEl.classList.add('pulse');
+    }
+
+    // init immediately, then update every second on interval
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    // accessibility: ensure reduced motion users are not forced to animate
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if(mediaQuery.matches){
+      const ssEl = document.getElementById('ss');
+      ssEl.classList.remove('pulse');
+    }
+  </script>
+</body>
+</html>
