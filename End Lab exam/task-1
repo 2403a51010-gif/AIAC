@@ -1,0 +1,113 @@
+import re
+
+def extract_invoice_details(text):
+    """
+    Extract key details from an invoice text: invoice number, total amount, and tax amount.
+
+    The function searches for common patterns in invoice text using regular expressions.
+    It handles variations like "Invoice No", "Inv:", "Total Amount", "VAT", "GST", 
+    amounts with or without decimals, and amounts with commas.
+
+    Parameters:
+    ----------
+    text : str
+        The full invoice content as a string.
+
+    Returns:
+    -------
+    dict
+        Dictionary containing:
+        - 'invoice_number' (str or None): Invoice number if found.
+        - 'total_amount' (float or None): Total invoice amount if found.
+        - 'tax_amount' (float or None): Tax amount (Tax, VAT, or GST) if found.
+
+    Example:
+    -------
+    >>> invoice_text = "Invoice No: INV-001\\nTotal Amount: $100.00\\nTax: $10.00"
+    >>> extract_invoice_details(invoice_text)
+    {'invoice_number': 'INV-001', 'total_amount': 100.0, 'tax_amount': 10.0}
+    """
+
+    # -------------------- Extract Invoice Number --------------------
+    invoice_patterns = [
+        r'Invoice\s*(?:No|#|Number|No:)?\s*[:\-]?\s*([A-Za-z0-9\-]+)',  # Matches "Invoice No: INV-001", "Invoice #ABC123"
+        r'Inv\s*[:\-]?\s*([A-Za-z0-9\-]+)'                               # Matches "Inv: 2025-002"
+    ]
+    invoice_number = None
+    for pattern in invoice_patterns:
+        match = re.search(pattern, text, re.IGNORECASE)
+        if match:
+            invoice_number = match.group(1)
+            break
+
+    # -------------------- Extract Total Amount --------------------
+    total_patterns = [
+        r'Total Amount\s*[:\-]?\s*\$?\s*([\d,]+(?:\.\d{2})?)',
+        r'Total\s*[:\-]?\s*\$?\s*([\d,]+(?:\.\d{2})?)',
+        r'Amount\s*[:\-]?\s*\$?\s*([\d,]+(?:\.\d{2})?)'
+    ]
+    total_amount = None
+    for pattern in total_patterns:
+        match = re.search(pattern, text, re.IGNORECASE)
+        if match:
+            total_amount = float(match.group(1).replace(',', ''))
+            break
+
+    # -------------------- Extract Tax Amount --------------------
+    tax_patterns = [
+        r'Tax\s*[:\-]?\s*\$?\s*([\d,]+(?:\.\d{2})?)',
+        r'VAT\s*[:\-]?\s*\$?\s*([\d,]+(?:\.\d{2})?)',
+        r'GST\s*[:\-]?\s*\$?\s*([\d,]+(?:\.\d{2})?)'
+    ]
+    tax_amount = None
+    for pattern in tax_patterns:
+        match = re.search(pattern, text, re.IGNORECASE)
+        if match:
+            tax_amount = float(match.group(1).replace(',', ''))
+            break
+
+    return {
+        "invoice_number": invoice_number,
+        "total_amount": total_amount,
+        "tax_amount": tax_amount
+    }
+
+
+# -------------------- Test Cases --------------------
+"""
+These test cases demonstrate the extraction of invoice number, total amount, 
+and tax from various invoice text formats, including commas, decimals, 
+and different tax labels.
+"""
+
+invoice_text_1 = """
+Invoice No: INV-2025-001
+Date: 2025-11-20
+Total Amount: $450.50
+Tax: $45.05
+Thank you for your business.
+"""
+
+invoice_text_2 = """
+Inv: 2025-002
+Amount: 1,200.75 USD
+VAT 120.08
+"""
+
+invoice_text_3 = """
+Invoice #ABC123
+Total: $99.99
+GST: $9.99
+"""
+
+invoice_text_4 = """
+Invoice Number: INV-2025-004
+Total Due: USD 500
+Sales Tax: $50
+"""
+
+# Print extracted invoice details for each test case
+print(extract_invoice_details(invoice_text_1))
+print(extract_invoice_details(invoice_text_2))
+print(extract_invoice_details(invoice_text_3))
+print(extract_invoice_details(invoice_text_4))
